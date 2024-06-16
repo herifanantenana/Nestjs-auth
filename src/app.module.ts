@@ -28,6 +28,7 @@ import config from './config/config';
         signOptions: { expiresIn: configService.get('jwt.expiresIn') },
       }),
       inject: [ConfigService],
+      global: true,
     }),
     AuthModule,
   ],
