@@ -10,7 +10,7 @@ export class AuthController {
   @Post('signup') //auth/signup
   async signUp(@Body() signupData: SignupDto): Promise<any> {
     // Call the service
-    this.authService.signup(signupData);
+    return this.authService.signup(signupData);
   }
 
   //TODO: Post Login
