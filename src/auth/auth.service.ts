@@ -54,7 +54,7 @@ export class AuthService {
   }
 
   async refreshToken(refreshToken: RefreshTokenDto) {
-    const token = await this.RefreshTokenModel.findOneAndDelete({
+    const token = await this.RefreshTokenModel.findOne({
       token: refreshToken.token,
       expires: { $gt: new Date() },
     }).exec();
@@ -74,10 +74,10 @@ export class AuthService {
   private async generateRefreshToken(token: string, userId: string | ObjectId) {
     const expires = new Date();
     expires.setDate(expires.getDate() + 5);
-    return this.RefreshTokenModel.create({
-      token,
-      userId,
-      expires,
-    });
+    return this.RefreshTokenModel.updateOne(
+      { userId },
+      { token, expires },
+      { upsert: true },
+    );
   }
 }
