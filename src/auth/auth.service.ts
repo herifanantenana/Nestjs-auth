@@ -6,9 +6,10 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { compare, hash } from 'bcrypt';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { LoginDto } from './dtos/login.dto';
+import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { SignupDto } from './dtos/signup.dto';
 import { RefreshToken } from './schemas/refresh-token.schema';
 import { User } from './schemas/user.schema';
@@ -26,7 +27,7 @@ export class AuthService {
     const { name, email, password } = signupDate;
     const emailIsUse = await this.UserModel.findOne({
       email: email,
-    });
+    }).exec();
     if (emailIsUse) {
       throw new BadRequestException('Email is already in use');
     }
@@ -41,7 +42,7 @@ export class AuthService {
 
   async login(credentials: LoginDto) {
     const { email, password } = credentials;
-    const user = await this.UserModel.findOne({ email: email });
+    const user = await this.UserModel.findOne({ email: email }).exec();
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -52,14 +53,25 @@ export class AuthService {
     return this.generateJwtToken(user.id);
   }
 
-  private async generateJwtToken(userId: string) {
+  async refreshToken(refreshToken: RefreshTokenDto) {
+    const token = await this.RefreshTokenModel.findOneAndDelete({
+      token: refreshToken.token,
+      expires: { $gt: new Date() },
+    }).exec();
+    if (!token) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    return this.generateJwtToken(token.userId);
+  }
+
+  private async generateJwtToken(userId: string | ObjectId) {
     const accessToken = this.jwtService.sign({ userId });
     const refreshToken = uuidv4();
     await this.generateRefreshToken(refreshToken, userId);
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, userId };
   }
 
-  private async generateRefreshToken(token: string, userId: string) {
+  private async generateRefreshToken(token: string, userId: string | ObjectId) {
     const expires = new Date();
     expires.setDate(expires.getDate() + 5);
     return this.RefreshTokenModel.create({
