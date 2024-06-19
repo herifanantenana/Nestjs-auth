@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -62,6 +63,26 @@ export class AuthService {
       throw new UnauthorizedException('Invalid token');
     }
     return this.generateJwtToken(token.userId);
+  }
+
+  async changePassword(
+    userId: string | ObjectId,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.UserModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const passwordMatch = await compare(oldPassword, user.password);
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const hashedPassword = await hash(newPassword, 10);
+    await this.UserModel.updateOne(
+      { _id: userId },
+      { password: hashedPassword },
+    ).exec();
   }
 
   private async generateJwtToken(userId: string | ObjectId) {
