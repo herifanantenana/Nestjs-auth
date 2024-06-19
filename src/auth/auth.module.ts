@@ -6,6 +6,7 @@ import {
   RefreshToken,
   RefreshTokenSchema,
 } from './schemas/refresh-token.schema';
+import { ResetToken, ResetTokenSchema } from './schemas/reset-token.schemas';
 import { User, UserSchema } from './schemas/user.schema';
 
 @Module({
@@ -18,6 +19,10 @@ import { User, UserSchema } from './schemas/user.schema';
       {
         name: RefreshToken.name,
         schema: RefreshTokenSchema,
+      },
+      {
+        name: ResetToken.name,
+        schema: ResetTokenSchema,
       },
     ]),
   ],

@@ -13,6 +13,7 @@ import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { SignupDto } from './dtos/signup.dto';
 import { RefreshToken } from './schemas/refresh-token.schema';
+import { ResetToken } from './schemas/reset-token.schemas';
 import { User } from './schemas/user.schema';
 @Injectable()
 export class AuthService {
@@ -21,6 +22,8 @@ export class AuthService {
     private UserModel: Model<User>,
     @InjectModel(RefreshToken.name)
     private RefreshTokenModel: Model<RefreshToken>,
+    @InjectModel(ResetToken.name)
+    private ResetTokenModel: Model<ResetToken>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -83,6 +86,24 @@ export class AuthService {
       { _id: userId },
       { password: hashedPassword },
     ).exec();
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.UserModel.findOne({ email }).exec();
+    if (user) {
+      const resetToken = uuidv4();
+      const expires = new Date();
+      expires.setHours(expires.getHours() + 1);
+      await this.ResetTokenModel.create({
+        token: resetToken,
+        userId: user._id,
+        expires,
+      });
+      //TODO: Send email
+      return { resetToken, userId: user._id, email };
+    }
+
+    return { message: 'If this user exists, they will receive an email' };
   }
 
   private async generateJwtToken(userId: string | ObjectId) {

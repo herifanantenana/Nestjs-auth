@@ -5,6 +5,7 @@ import { ChangePasswordDto } from './dtos/change-password.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { SignupDto } from './dtos/signup.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -49,8 +50,11 @@ export class AuthController {
   //TODO: Forgot Password
   @Post('forgot-password') //auth/forgot-password
   async forgotPassword(
-    @Body() forgotPasswordData: forgotPasswordDto,
-  ): Promise<any> {}
+    @Body() forgotPasswordData: ForgotPasswordDto,
+  ): Promise<any> {
+    // Call the service
+    return this.authService.forgotPassword(forgotPasswordData.email);
+  }
 
   //TODO: Reset Password
 }
