@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -60,7 +61,7 @@ export class AuthService {
   async refreshToken(refreshToken: RefreshTokenDto) {
     const token = await this.RefreshTokenModel.findOne({
       token: refreshToken.token,
-      expires: { $gt: new Date() },
+      expires: { $gte: new Date() },
     }).exec();
     if (!token) {
       throw new UnauthorizedException('Invalid token');
@@ -104,6 +105,22 @@ export class AuthService {
     }
 
     return { message: 'If this user exists, they will receive an email' };
+  }
+
+  async resetPassword(resetToken: string, newPassword: string) {
+    const token = await this.ResetTokenModel.findOneAndDelete({
+      token: resetToken,
+      expires: { $gte: new Date() },
+    }).exec();
+    if (!token) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    const user = await this.UserModel.findById(token.userId).exec();
+    if (!user) {
+      throw new InternalServerErrorException('User not found');
+    }
+    user.password = await hash(newPassword, 10);
+    await user.save();
   }
 
   private async generateJwtToken(userId: string | ObjectId) {
